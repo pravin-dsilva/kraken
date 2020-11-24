@@ -13,6 +13,7 @@ import kraken.invoke.command as runcommand
 import kraken.node_actions.common_node_functions as nodeaction
 from kraken.node_actions.aws_node_scenarios import aws_node_scenarios
 from kraken.node_actions.gcp_node_scenarios import gcp_node_scenarios
+from kraken.node_actions.ibmcloud_node_scenarios import ibmcloud_node_scenarios
 import kraken.time_actions.common_time_functions as time_actions
 
 
@@ -22,7 +23,8 @@ def get_node_scenario_object(node_scenario):
         return aws_node_scenarios()
     elif node_scenario['cloud_type'] == 'gcp':
         return gcp_node_scenarios()
-
+    elif node_scenario['cloud_type'] == 'ibmcloud':
+        return ibmcloud_node_scenarios()
 
 # Inject the specified node scenario
 def inject_node_scenario(action, node_scenario, node_scenario_object):
@@ -30,7 +32,8 @@ def inject_node_scenario(action, node_scenario, node_scenario_object):
     instance_kill_count = node_scenario.get("instance_kill_count", 1)
     node_name = node_scenario.get("node_name", "")
     label_selector = node_scenario.get("label_selector", "")
-    timeout = node_scenario.get("timeout", 120)
+    timeout = node_scenario.get("timeout", 300)
+    service = node_scenario.get("service", "")
     # Get the node to apply the scenario
     node = nodeaction.get_node(node_name, label_selector)
     if action == "node_start_scenario":
@@ -49,7 +52,9 @@ def inject_node_scenario(action, node_scenario, node_scenario_object):
         node_scenario_object.stop_start_kubelet_scenario(instance_kill_count, node, timeout)
     elif action == "node_crash_scenario":
         node_scenario_object.node_crash_scenario(instance_kill_count, node, timeout)
-
+    elif action == "stop_start_bastion_scenario":
+        node_scenario_object.node_stop_start_scenario(instance_kill_count, node_scenario['bastion_hostname'], timeout)
+        node_scenario_object.node_service_status(node_scenario['bastion_hostname'], service, timeout)
 
 # Get cerberus status
 def cerberus_integration(config):
@@ -224,7 +229,7 @@ def main(cfg):
         global kubeconfig_path, wait_duration
         kubeconfig_path = config["kraken"].get("kubeconfig_path", "")
         chaos_scenarios = config["kraken"].get("chaos_scenarios", [])
-        wait_duration = config["tunings"].get("wait_duration", 60)
+        wait_duration = config["tunings"].get("wait_duration", 300)
         iterations = config["tunings"].get("iterations", 1)
         daemon_mode = config["tunings"].get("daemon_mode", False)
 

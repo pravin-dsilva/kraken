@@ -28,6 +28,10 @@ class abstract_node_scenarios:
     # Node scenario to reboot the node
     def node_reboot_scenario(self, instance_kill_count, node, timeout):
         pass
+        
+    # Node scenario to check service status on bastion node
+    def node_service_status(self, node, service, timeout):
+        pass
 
     # Node scenario to stop the kubelet
     def stop_kubelet_scenario(self, instance_kill_count, node, timeout):
